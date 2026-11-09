@@ -1,0 +1,102 @@
+modules:
+  jira:issuePanel:
+    - key: blastradius-jira-panel
+      resource: main-ui
+      resolver:
+        function: ui-resolver
+      render: native
+      title: BlastRadius AI Risk Radar
+      icon: https://developer.atlassian.com/platform/forge/images/icons/issue-panel-icon.svg
+
+  rovo:agent:
+    - key: blastradius-agent
+      name: BlastRadius Risk Advisor
+      description: Analyzes code changes, Jira dependencies, Confluence architecture
+        docs, and past JSM incidents to calculate deployment risk.
+      prompt: >
+        You are BlastRadius AI, an expert Principal Site Reliability and Staff
+        Engineer. When a user asks to evaluate a Jira issue, Pull Request, or
+        deployment risk: 1. Invoke the 'analyze-blast-radius' action using the
+        provided Jira Issue Key. 2. Cross-reference the touched modules against
+        past JSM incidents and Confluence architecture standards. 3. Output a
+        structured Risk Score (0-100), Blast Radius Impact level (LOW, MEDIUM,
+        HIGH, CRITICAL),
+           affected downstream Jira issues, and a clear Go/No-Go deployment checklist.
+        4. If the user asks to log a pre-deployment audit report, invoke
+        'publish-confluence-audit'.
+      actions:
+        - analyze-blast-radius
+        - publish-confluence-audit
+      conversationStarters:
+        - Analyze the deployment blast radius for issue PROJ-101
+        - Check if our latest PR violates any Confluence architecture guardrails
+        - Generate a pre-merge risk audit page in Confluence for PROJ-101
+
+  action:
+    - key: analyze-blast-radius
+      name: Analyze Pre-Merge Blast Radius
+      function: analyzeBlastRadiusFn
+      actionVerb: GET
+      description: Fetches Jira issue links, JSM incident history, and Confluence
+        specs to compute a deployment risk score.
+      inputs:
+        issueKey:
+          title: Jira Issue Key
+          type: string
+          required: true
+          description: "The Jira issue key to evaluate (e.g., PROJ-101)"
+
+    - key: publish-confluence-audit
+      name: Publish Confluence Risk Audit Report
+      function: publishConfAuditFn
+      actionVerb: CREATE
+      description: Creates a pre-merge risk & confidence summary page in Confluence.
+      inputs:
+        issueKey:
+          title: Jira Issue Key
+          type: string
+          required: true
+          description: "The Jira issue key"
+        spaceId:
+          title: Confluence Space ID
+          type: string
+          required: true
+          description: "The Confluence space ID to publish the report"
+        summaryReport:
+          title: Summary Report
+          type: string
+          required: true
+          description: "Executive risk summary report text"
+
+  rovo:mcp:
+    - key: blastradius-mcp-server
+      name: BlastRadius MCP Server
+      tools:
+        - analyze-blast-radius
+        - publish-confluence-audit
+
+  function:
+    - key: ui-resolver
+      handler: index.uiHandler
+    - key: analyzeBlastRadiusFn
+      handler: index.analyzeBlastRadius
+    - key: publishConfAuditFn
+      handler: index.publishConfluenceAudit
+
+resources:
+  - key: main-ui
+    path: src/frontend/index.jsx
+
+app:
+  runtime:
+    name: nodejs22.x
+  id: ari:cloud:ecosystem::app/32f4ca6b-b3d1-4880-a63b-ab4c386d924d
+
+permissions:
+  scopes:
+    - search:confluence
+    - write:page:confluence
+    - read:jira-work
+    - read:confluence-content.summary
+    - write:confluence-content
+    - storage:app

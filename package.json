@@ -1,0 +1,18 @@
+{
+  "name": "blastradius-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pre-Merge Context & Risk Radar for Atlassian Codegeist 2026",
+  "main": "src/index.js",
+  "scripts": {
+    "lint": "forge lint",
+    "deploy": "forge deploy",
+    "forge:install": "forge install"
+  },
+  "dependencies": {
+    "@forge/api": "^4.1.0",
+    "@forge/bridge": "^4.0.0",
+    "@forge/react": "^10.6.0",
+    "@forge/resolver": "^1.6.0"
+  }
+}
